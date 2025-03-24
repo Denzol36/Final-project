@@ -25,8 +25,9 @@ int main() {
         } else if (choice >= 4 && choice <= 7) {
             noArgFunctions[choice - 4]();
         } else if (choice == 8) {
-            return 0;
-        } else {
+            break;
+        } 
+        else {
             cout << "Invalid choice!\n";
         }
     };
