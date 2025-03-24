@@ -15,7 +15,7 @@ int main() {
     void (*functions[])(const char*) = {addStudent, removeStudent, updateStudent};
     void (*noArgFunctions[])() = {showAllStudent, searchStudent, sortStudent, showExcellentStudents};
     
-    do {
+    while(1){
         cout << "\n1. Add Student\n2. Remove Student\n3. Update Student\n4. Show All Students\n";
         cout << "5. Search Student\n6. Sort Students\n7. Show Excellent Students\n8. Exit\nChoice: ";
         cin >> choice;
@@ -29,5 +29,5 @@ int main() {
         } else {
             cout << "Invalid choice!\n";
         }
-    } while (1);
+    };
 }
