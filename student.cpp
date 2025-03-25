@@ -8,9 +8,12 @@ struct Student {
     char firstName[50];
     char lastName[50];
     int age;
-    double grades[10];
+    double* grades;
     int gradeCount;
     double averageGrade;
+
+    Student() : grades(nullptr), gradeCount(0), averageGrade(0) {}
+    Student() { delete[] grades; }
 };
 
 Student students[100];
@@ -23,6 +26,7 @@ void loadFromFile(const char* filename) {
     }
     studentCount = 0;
     while (fscanf(file, "%s %s %d %d", students[studentCount].firstName, students[studentCount].lastName, &students[studentCount].age, &students[studentCount].gradeCount) == 4) {
+        students[studentCount].grades = new double[students[studentCount].gradeCount];
         double sum = 0;
         for (int i = 0; i < students[studentCount].gradeCount; i++) {
             fscanf(file, "%lf", &students[studentCount].grades[i]);
@@ -55,13 +59,15 @@ void addStudent(const char* filename) {
     printf("Enter first name, last name, and age: ");
     scanf("%s %s %d", students[studentCount].firstName, students[studentCount].lastName, &students[studentCount].age);
 
-    printf("How many grades do you want to enter? (max 10): ");
+    printf("How many grades do you want to enter?: ");
     scanf("%d", &students[studentCount].gradeCount);
 
-    if (students[studentCount].gradeCount > 10) {
-        students[studentCount].gradeCount = 10;
+    if (students[studentCount].gradeCount < 1) {
+        printf("Invalid number of grades!\n");
+        return;
     }
 
+    students[studentCount].grades = new double[students[studentCount].gradeCount];
     double sum = 0;
     printf("Enter %d grades (between 1 and 12):\n", students[studentCount].gradeCount);
     for (int i = 0; i < students[studentCount].gradeCount; i++) {
@@ -115,5 +121,9 @@ int main() {
         } else {
             cout << "Invalid choice!\n";
         }
+    }
+
+    for (int i = 0; i < studentCount; i++) {
+        delete[] students[i].grades;
     }
 }
