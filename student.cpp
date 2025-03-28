@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 
 using namespace std;
 
@@ -11,9 +12,6 @@ struct Student {
     double* grades;
     int gradeCount;
     double averageGrade;
-
-    Student() : grades(nullptr), gradeCount(0), averageGrade(0) {}
-    Student() { delete[] grades; }
 };
 
 Student students[100];
@@ -21,12 +19,11 @@ int studentCount = 0;
 
 void loadFromFile(const char* filename) {
     FILE* file = fopen(filename, "r");
-    if (!file) {
-        return;
-    }
+    if (!file) return;
+    
     studentCount = 0;
     while (fscanf(file, "%s %s %d %d", students[studentCount].firstName, students[studentCount].lastName, &students[studentCount].age, &students[studentCount].gradeCount) == 4) {
-        students[studentCount].grades = new double[students[studentCount].gradeCount];
+        students[studentCount].grades = (double*)malloc(students[studentCount].gradeCount * sizeof(double));
         double sum = 0;
         for (int i = 0; i < students[studentCount].gradeCount; i++) {
             fscanf(file, "%lf", &students[studentCount].grades[i]);
@@ -51,79 +48,134 @@ void saveToFile(const char* filename) {
 }
 
 void addStudent(const char* filename) {
-    if (studentCount >= 100) {
-        printf("Student list is full!\n");
-        return;
-    }
+    if (studentCount >= 100) return;
 
     printf("Enter first name, last name, and age: ");
     scanf("%s %s %d", students[studentCount].firstName, students[studentCount].lastName, &students[studentCount].age);
-
+    
     printf("How many grades do you want to enter?: ");
     scanf("%d", &students[studentCount].gradeCount);
-
-    if (students[studentCount].gradeCount < 1) {
-        printf("Invalid number of grades!\n");
-        return;
-    }
-
-    students[studentCount].grades = new double[students[studentCount].gradeCount];
+    
+    students[studentCount].grades = (double*)malloc(students[studentCount].gradeCount * sizeof(double));
     double sum = 0;
-    printf("Enter %d grades (between 1 and 12):\n", students[studentCount].gradeCount);
     for (int i = 0; i < students[studentCount].gradeCount; i++) {
-        while (true) {
-            scanf("%lf", &students[studentCount].grades[i]);
-            if (students[studentCount].grades[i] >= 1 && students[studentCount].grades[i] <= 12) {
-                break;
-            }
-            printf("Invalid! Grade must be between 1 and 12. Try again: ");
-        }
+        scanf("%lf", &students[studentCount].grades[i]);
         sum += students[studentCount].grades[i];
     }
-
     students[studentCount].averageGrade = sum / students[studentCount].gradeCount;
     studentCount++;
     saveToFile(filename);
 }
 
-void showAllStudents() {
-    if (studentCount == 0) {
-        printf("No students to display.\n");
-        return;
-    }
+void removeStudent(const char* filename) {
+    char lastName[50];
+    printf("Enter last name of student to remove: ");
+    scanf("%s", lastName);
+    
     for (int i = 0; i < studentCount; i++) {
-        printf("First Name: %s, Last Name: %s, Age: %d, Grades: ", students[i].firstName, students[i].lastName, students[i].age);
-        for (int j = 0; j < students[i].gradeCount; j++) {
-            printf("%.2lf ", students[i].grades[j]);
+        if (strcmp(students[i].lastName, lastName) == 0) {
+            printf("Student found: %s %s, Age: %d, Grades: ", students[i].firstName, students[i].lastName, students[i].age);
+            for (int j = 0; j < students[i].gradeCount; j++) {
+                printf("%.2lf ", students[i].grades[j]);
+            }
+            printf("| Average Grade: %.2lf\n", students[i].averageGrade);
+            char confirmation;
+            printf("Are you sure you want to remove this student? (y/n): ");
+            scanf(" %c", &confirmation);
+
+            if (confirmation == 'y' || confirmation == 'Y') {
+                free(students[i].grades);
+                for (int j = i; j < studentCount - 1; j++) {
+                    students[j] = students[j + 1];
+                }
+                studentCount--;
+                saveToFile(filename);
+                printf("Student removed successfully.\n");
+                return;
+            } else {
+                printf("Student remove canceled.\n");
+                return;
+            }
         }
-        printf("| Average Grade: %.2lf\n", students[i].averageGrade);
     }
+    printf("Student not found.\n");
+}
+
+void showAllStudents() {
+    for (int i = 0; i < studentCount; i++) {
+        printf("%s %s, Age: %d, Avg Grade: %.2lf\n", students[i].firstName, students[i].lastName, students[i].age, students[i].averageGrade);
+    }
+}
+
+void searchStudent() {
+    char lastName[50];
+    printf("Enter last name to search: ");
+    scanf("%s", lastName);
+    for (int i = 0; i < studentCount; i++) {
+        if (strcmp(students[i].lastName, lastName) == 0) {
+            printf("Found: %s %s, Age: %d, Avg Grade: %.2lf\n", students[i].firstName, students[i].lastName, students[i].age, students[i].averageGrade);
+            return;
+        }
+    }
+    printf("Student not found.\n");
+}
+
+void showExcellentStudents() {
+    for (int i = 0; i < studentCount; i++) {
+        if (students[i].averageGrade >= 10.0) {
+            printf("%s %s, Age: %d, Avg Grade: %.2lf\n", students[i].firstName, students[i].lastName, students[i].age, students[i].averageGrade);
+        }
+    }
+}
+
+void sortStudentsByGrade() {
+    for (int i = 0; i < studentCount - 1; i++) {
+        for (int j = i + 1; j < studentCount; j++) {
+            if (students[i].averageGrade < students[j].averageGrade) {
+                Student temp = students[i];
+                students[i] = students[j];
+                students[j] = temp;
+            }
+        }
+    }
+    printf("Students sorted by average grade.\n");
 }
 
 int main() {
     char filename[100];
-    cout << "Enter the filename: ";
-    cin >> filename;
-
+    printf("Enter the filename: ");
+    scanf("%s", filename);
     loadFromFile(filename);
 
     int choice;
     while (true) {
-        cout << "\n1. Add Student\n2. Show All Students\n3. Exit\nChoice: ";
-        cin >> choice;
-
-        if (choice == 1) {
-            addStudent(filename);
-        } else if (choice == 2) {
-            showAllStudents();
-        } else if (choice == 3) {
-            break;
-        } else {
-            cout << "Invalid choice!\n";
+        printf("\n1. Add Student\n2. Remove Student\n3. Show All Students\n4. Search Student\n5. Show Excellent Students\n6. Sort Students By Grade\n7. Exit\nChoice: ");
+        scanf("%d", &choice);
+        
+        switch (choice) {
+            case 1: 
+                addStudent(filename); 
+                break;
+            case 2: 
+                removeStudent(filename); 
+                break;
+            case 3: 
+                showAllStudents(); 
+                break;
+            case 4: 
+                searchStudent(); 
+                break;
+            case 5:
+                showExcellentStudents(); 
+                break;
+            case 6: 
+                sortStudentsByGrade(); 
+                break;
+            case 7: 
+                for (int i = 0; i < studentCount; i++) free(students[i].grades);
+                return 0;
+            default: 
+                printf("Invalid choice!\n");
         }
-    }
-
-    for (int i = 0; i < studentCount; i++) {
-        delete[] students[i].grades;
     }
 }
