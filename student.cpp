@@ -59,8 +59,15 @@ void addStudent(const char* filename) {
     students[studentCount].grades = (double*)malloc(students[studentCount].gradeCount * sizeof(double));
     double sum = 0;
     for (int i = 0; i < students[studentCount].gradeCount; i++) {
-        scanf("%lf", &students[studentCount].grades[i]);
-        sum += students[studentCount].grades[i];
+        double grade;
+        printf("Enter grade %d (1-12): ", i + 1);
+        scanf("%lf", &grade);
+        while (grade < 1 || grade > 12) {
+            printf("Invalid grade! Enter again (1-12): ");
+            scanf("%lf", &grade);
+        }
+        students[studentCount].grades[i] = grade;
+        sum += grade;
     }
     students[studentCount].averageGrade = sum / students[studentCount].gradeCount;
     studentCount++;
@@ -141,6 +148,44 @@ void sortStudentsByGrade() {
     printf("Students sorted by average grade.\n");
 }
 
+void editStudent(const char* filename) {
+    char lastName[50];
+    printf("Enter last name of student to edit: ");
+    scanf("%s", lastName);
+    
+    for (int i = 0; i < studentCount; i++) {
+        if (strcmp(students[i].lastName, lastName) == 0) {
+            printf("Editing student: %s %s, Age: %d\n", students[i].firstName, students[i].lastName, students[i].age);
+            
+            printf("Enter new first name, last name, and age: ");
+            scanf("%s %s %d", students[i].firstName, students[i].lastName, &students[i].age);
+            
+            printf("How many new grades?: ");
+            scanf("%d", &students[i].gradeCount);
+            
+            students[i].grades = (double*)realloc(students[i].grades, students[i].gradeCount * sizeof(double));
+            double sum = 0;
+            for (int j = 0; j < students[i].gradeCount; j++) {
+                double grade;
+                printf("Enter grade %d (1-12): ", j + 1);
+                scanf("%lf", &grade);
+                while (grade < 1 || grade > 12) {
+                    printf("Invalid grade! Enter again (1-12): ");
+                    scanf("%lf", &grade);
+                }
+                students[i].grades[j] = grade;
+                sum += grade;
+            }
+            students[i].averageGrade = sum / students[i].gradeCount;
+            saveToFile(filename);
+            printf("Student updated successfully.\n");
+            return;
+        }
+    }
+    printf("Student not found.\n");
+}
+
+
 int main() {
     char filename[100];
     printf("Enter the filename: ");
@@ -149,7 +194,7 @@ int main() {
 
     int choice;
     while (true) {
-        printf("\n1. Add Student\n2. Remove Student\n3. Show All Students\n4. Search Student\n5. Show Excellent Students\n6. Sort Students By Grade\n7. Exit\nChoice: ");
+        printf("\n1. Add Student\n2. Remove Student\n3. Show All Students\n4. Search Student\n5. Show Excellent Students\n6. Sort Students By Grade\n7. Edit Students, 8. Exit\nChoice: ");
         scanf("%d", &choice);
         
         switch (choice) {
@@ -171,7 +216,10 @@ int main() {
             case 6: 
                 sortStudentsByGrade(); 
                 break;
-            case 7: 
+            case 7:
+                editStudent(filename);
+                break;
+            case 8: 
                 for (int i = 0; i < studentCount; i++) free(students[i].grades);
                 return 0;
             default: 
